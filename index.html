@@ -1,0 +1,191 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SolarSkin V7</title><style>
+:root{--ink:#18222d;--muted:#64717d;--card:#fff;--line:#dce2e7;--bg:#f4f6f8;--nav:#152433;--accent:#2c5c7c}*{box-sizing:border-box}body{font-family:Inter,system-ui,-apple-system,sans-serif;margin:0;background:var(--bg);color:var(--ink)}header{padding:16px 22px;background:var(--nav);color:white;display:flex;justify-content:space-between;gap:12px;align-items:center}header small{opacity:.7}main{display:grid;grid-template-columns:320px minmax(0,1fr);gap:16px;padding:16px;max-width:1450px;margin:auto}.panel,.view{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}.section{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}label{display:block;font-size:12px;color:var(--muted);margin:8px 0}input,select,button{font:inherit}input,select{width:100%;padding:9px;border:1px solid #cbd4db;border-radius:8px;background:white;color:var(--ink);margin-top:4px}input[type=range]{padding:0}.btns{display:flex;gap:8px;flex-wrap:wrap}.btns button,button.primary{border:0;border-radius:8px;padding:9px 12px;cursor:pointer}.btns button{background:#e9eef2;color:var(--ink)}button.primary{background:var(--accent);color:white;width:100%;margin-top:10px}.scene{height:520px;position:relative;overflow:hidden;background:linear-gradient(#d9eaf5 0%,#f8edd1 70%,#d8ddcf 70%);border-radius:12px;touch-action:none;cursor:grab}.scene:active{cursor:grabbing}.sun{position:absolute;width:46px;height:46px;border-radius:50%;background:#ffd65a;box-shadow:0 0 30px #ffc83d99}.building{position:absolute;left:50%;top:53%;width:280px;height:190px;transform:translate(-50%,-50%);perspective:900px}.cube{width:100%;height:100%;position:relative;transform-style:preserve-3d}.face{position:absolute;display:flex;align-items:center;justify-content:center;border:1px solid #26323888;font-weight:700;color:#18222d;transition:background .15s}.front,.back{width:280px;height:160px}.front{transform:translateZ(90px)}.back{transform:rotateY(180deg) translateZ(90px)}.right,.left{width:180px;height:160px;left:50px}.right{transform:rotateY(90deg) translateZ(140px)}.left{transform:rotateY(-90deg) translateZ(140px)}.roof{width:280px;height:180px;top:-10px;transform:rotateX(90deg) translateZ(90px)}.northArrow{position:absolute;left:24px;bottom:22px;font-weight:800;text-align:center}.northArrow:before{content:'↑';display:block;font-size:38px;line-height:30px}.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}.stat{padding:10px;border:1px solid var(--line);border-radius:9px;text-align:center}.small{font-size:12px;color:var(--muted)}.value{font-size:19px;font-weight:750}.summary{margin-top:12px;padding:12px;background:#f7f9fa;border-radius:10px}.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.compare>div{border:1px solid var(--line);border-radius:10px;padding:10px}.legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}.swatch{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px}.hidden{display:none}
+.dayplayer{margin-top:10px;padding:11px;border:1px solid var(--line);border-radius:10px;background:#f7f9fa}
+.dayplayer .timeline{display:grid;grid-template-columns:58px 1fr 58px;gap:8px;align-items:center}
+.dayplayer input[type=range]{width:100%}
+.playrow{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;margin-top:8px}
+.playrow button{border:0;border-radius:8px;padding:9px 12px;cursor:pointer;background:#e9eef2;color:var(--ink)}
+.clockread{font-size:20px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums}
+
+#shadowSvg text{font-family:Inter,system-ui,-apple-system,sans-serif}
+#shadowPoly{transition:points .08s linear,opacity .15s}
+
+.thermalCard{margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:12px;background:#fff}
+.thermalTop{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.thermalMetric{border:1px solid var(--line);border-radius:9px;padding:10px;text-align:center;background:#f7f9fa}
+.thermalMetric .big{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+.heatbar{height:10px;background:#e9eef2;border-radius:999px;overflow:hidden;margin-top:7px}
+.heatfill{height:100%;width:0%;background:linear-gradient(90deg,#ffd45a,#ef8d32,#c74a34);transition:width .12s}
+.thermalNote{margin-top:8px;padding:9px;border-radius:8px;background:#fff8df;font-size:12px;color:#5c5132}
+@media(max-width:800px){.thermalTop{grid-template-columns:1fr}}
+
+@media(max-width:800px){main{grid-template-columns:1fr}.scene{height:400px}.stats{grid-template-columns:repeat(2,1fr)}.compare{grid-template-columns:1fr}}
+</style></head><body><header><div><b>SolarSkin</b> — Architectural Solar Analyzer</div><small>V7 • solar heat gain + sky scenarios</small></header><main><section class="panel"><h3 style="margin-top:0">Site + building</h3><div class="row"><label>Latitude<input id="lat" type="number" step=".001" value="33.6846"></label><label>Longitude<input id="lon" type="number" step=".001" value="-117.8265"></label></div><div class="row"><label>Date<input id="date" type="date" value="2026-09-24"></label><label>Local time<input id="time" type="time" value="14:00"></label></div><label>UTC offset for site<input id="tz" type="number" step="0.5" min="-12" max="14" value="-7"></label><div class="btns"><button data-preset="summer">Summer solstice</button><button data-preset="equinox">Equinox</button><button data-preset="winter">Winter solstice</button></div><div class="section"><label>Building orientation — north façade azimuth <b id="otxt">0°</b><input id="orient" type="range" min="0" max="359" value="0"></label><div class="row"><label>Width (ft)<input id="width" type="number" value="60" min="1"></label><label>Depth (ft)<input id="depth" type="number" value="40" min="1"></label></div><label>Height (ft)<input id="height" type="number" value="30" min="1"></label></div><div class="section"><div class="dayplayer">
+<div class="timeline"><span class="small" id="sunriseTxt">Sunrise</span><input id="dayTime" type="range" min="0" max="1439" step="1" value="840" aria-label="Time of day"><span class="small" id="sunsetTxt">Sunset</span></div>
+<div class="playrow"><button id="play" type="button">▶ Play sun</button><div class="clockread" id="clockRead">2:00 PM</div><label class="small" style="margin:0">Speed<select id="animSpeed" style="width:auto;margin-left:4px"><option value="1">Slow</option><option value="3" selected>Normal</option><option value="8">Fast</option><option value="20">Very fast</option></select></label></div>
+<div class="btns" style="margin-top:8px"><button id="prev" type="button">−15 min</button><button id="noon" type="button">Solar noon</button><button id="next" type="button">+15 min</button></div>
+<div class="small" style="margin-top:7px">Loops from sunrise to sunset for the selected date. Pause at any moment or drag the timeline to inspect a specific time.</div>
+</div><label>Compare with orientation <b id="ctxt">45°</b><input id="compareOrient" type="range" min="0" max="359" value="45"></label></div><div class="section"><h4 style="margin:0 0 8px">V5 building study</h4><div class="row"><label>Floors<input id="floors" type="number" value="2" min="1" max="20"></label><label>Floor-to-floor (ft)<input id="floorH" type="number" value="12" min="6" max="30"></label></div><label><input id="windows" type="checkbox" checked style="width:auto;margin-right:6px">Show south glazing + overhang</label><div class="row"><label>Window ratio %<input id="wwr" type="number" value="45" min="5" max="90"></label><label>Overhang depth (ft)<input id="overhang" type="number" value="3" min="0" max="15" step=".5"></label></div><div class="btns"><button id="annual">Run annual study</button><button id="copyA">Set A</button><button id="copyB">Set B</button></div><div id="annualResult" class="small" style="margin-top:8px">Annual study samples daylight hours through the year.</div></div><div class="section">
+<h4 style="margin:0 0 6px">V7 solar heat gain</h4>
+<label>Sky condition<select id="skyCondition">
+<option value="clear" selected>☀️ Clear sky</option>
+<option value="partly">🌤️ Partly cloudy</option>
+<option value="overcast">☁️ Overcast</option>
+<option value="rain">🌧️ Rain / heavy overcast</option>
+</select></label>
+<div class="row"><label>Peak solar irradiance (W/m²)<input id="solarIrr" type="number" min="100" max="1200" step="25" value="1000"></label><label>Window SHGC<input id="shgc" type="number" min="0" max="1" step=".05" value=".35"></label></div>
+<p class="small">Sky scenarios are user-selected assumptions, not a weather forecast. BTU/hr is a conceptual solar heat-gain estimate, not a whole-building HVAC load.</p>
+</div><div class="section">
+<h4 style="margin:0 0 6px">Façade shadow study</h4>
+<label><input id="shadowOn" type="checkbox" checked style="width:auto;margin-right:6px"> Show moving window + overhang shadow</label>
+<div class="row"><label>Window width (ft)<input id="winW" type="number" min="1" value="18"></label><label>Window height (ft)<input id="winH" type="number" min="1" value="8"></label></div>
+<div class="row"><label>Sill height (ft)<input id="sillH" type="number" min="0" value="4"></label><label>Overhang depth (ft)<input id="ohDepth" type="number" min="0" step=".5" value="4"></label></div>
+<label>Overhang projection above window (ft)<input id="ohGap" type="number" min="0" step=".5" value=".5"></label>
+<p class="small">The south-façade diagram below uses the calculated sun vector to project the overhang shadow across the glazing at the selected time.</p>
+</div><button class="primary" id="calc">Update solar analysis</button><p class="small">Drag the visualization to orbit the model. Exposure values are relative direct-beam incidence, not kWh/m².</p></section><section class="view"><div class="scene" id="scene"><div class="sun" id="sun"></div><div class="building"><div class="cube" id="cube"><div class="face front" id="south">South*<div id="glazing" style="position:absolute;width:45%;height:48%;background:#b9d9e8cc;border:2px solid #eef8ff;bottom:18%;left:27%;"></div><div id="shade" style="position:absolute;width:55%;height:7px;background:#4d5962;top:29%;left:22%;transform:translateZ(3px)"></div></div><div class="face back" id="north">North*</div><div class="face right" id="east">East*</div><div class="face left" id="west">West*</div><div class="face roof" id="roof">Roof</div></div></div><div class="northArrow">N</div></div>
+<div class="thermalCard" id="thermalCard">
+<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><b>🔥 Estimated solar heat gain</b><span class="small" id="skyLabel">Clear sky assumption</span></div>
+<div class="thermalTop">
+<div class="thermalMetric"><div class="small">Current total</div><div class="big" id="heatNow">0 BTU/hr</div></div>
+<div class="thermalMetric"><div class="small">South glazing</div><div class="big" id="heatWindow">0 BTU/hr</div></div>
+<div class="thermalMetric"><div class="small">Approx. peak today</div><div class="big" id="heatPeak">0 BTU/hr</div></div>
+</div>
+<div class="heatbar"><div class="heatfill" id="heatFill"></div></div>
+<div class="small" id="heatBreakdown" style="margin-top:8px"></div>
+<div class="thermalNote">Conceptual solar-only estimate. It does not include outdoor air temperature, insulation/U-values, infiltration, internal loads, thermal mass, HVAC efficiency, or actual historical weather.</div>
+</div><div id="shadowCard" style="margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:12px">
+<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><b>South façade — moving shadow</b><span class="small" id="shadowStatus">Calculating…</span></div>
+<svg id="shadowSvg" viewBox="0 0 720 300" style="display:block;width:100%;height:auto;margin-top:8px;background:#eef2f3;border-radius:8px" role="img" aria-label="South façade window and overhang shadow study">
+<rect x="40" y="25" width="640" height="235" rx="3" fill="#d9dee1" stroke="#59636b"/>
+<g id="facadeGrid" opacity=".28"></g>
+<rect id="windowRect" x="245" y="100" width="230" height="100" fill="#a9c9d8" stroke="#31434f" stroke-width="2"/>
+<polygon id="shadowPoly" points="" fill="#28333c" opacity=".48"/>
+<line id="overhangLine" x1="235" y1="90" x2="485" y2="90" stroke="#25333d" stroke-width="7" stroke-linecap="round"/>
+<text x="52" y="48" font-size="14" fill="#4b5962">South façade elevation</text>
+<text id="shadowLabel" x="360" y="285" text-anchor="middle" font-size="14" fill="#4b5962"></text>
+</svg>
+</div><div class="legend"><span><i class="swatch" style="background:hsl(215 65% 72%)"></i>low</span><span><i class="swatch" style="background:hsl(110 65% 62%)"></i>moderate</span><span><i class="swatch" style="background:hsl(25 65% 50%)"></i>high</span><span>*labels follow building faces; azimuth changes with orientation</span></div><div class="stats" id="stats"></div><div class="summary" id="summary"></div><div class="compare"><div><b>Current orientation</b><div id="currentTotal" class="value"></div><span class="small">instantaneous façade exposure index</span></div><div><b>Comparison orientation</b><div id="compareTotal" class="value"></div><span class="small" id="compareText"></span></div><div class="summary" id="abResult"><b>Design A/B:</b> use Set A and Set B to save two orientations/building setups.</div></div></section></main><script>
+const $=id=>document.getElementById(id),rad=x=>x*Math.PI/180,deg=x=>x*180/Math.PI,clamp=(x,a,b)=>Math.max(a,Math.min(b,x)),norm=x=>(x%360+360)%360;
+function dayOfYear(y,m,d){return Math.floor((Date.UTC(y,m-1,d)-Date.UTC(y,0,0))/86400000)}
+function solarPosition(lat,lon,date,time,tz){const [Y,M,D]=date.split('-').map(Number),[hh,mm]=time.split(':').map(Number),n=dayOfYear(Y,M,D),gamma=2*Math.PI/365*(n-1+(hh-12)/24);const eq=229.18*(.000075+.001868*Math.cos(gamma)-.032077*Math.sin(gamma)-.014615*Math.cos(2*gamma)-.040849*Math.sin(2*gamma));const decl=.006918-.399912*Math.cos(gamma)+.070257*Math.sin(gamma)-.006758*Math.cos(2*gamma)+.000907*Math.sin(2*gamma)-.002697*Math.cos(3*gamma)+.00148*Math.sin(3*gamma);let minutes=hh*60+mm;let tst=(minutes+eq+4*lon-60*tz)%1440;if(tst<0)tst+=1440;let ha=tst/4-180;if(ha<-180)ha+=360;const L=rad(lat),H=rad(ha);let cosz=Math.sin(L)*Math.sin(decl)+Math.cos(L)*Math.cos(decl)*Math.cos(H);cosz=clamp(cosz,-1,1);const zen=Math.acos(cosz),alt=90-deg(zen);let az=Math.atan2(Math.sin(H),Math.cos(H)*Math.sin(L)-Math.tan(decl)*Math.cos(L));return{alt,az:norm(deg(az)+180),eq}}
+function incidence(sunAz,alt,surfaceAz,tilt=90){if(alt<=0)return 0;const z=rad(90-alt),t=rad(tilt);return clamp(Math.cos(z)*Math.cos(t)+Math.sin(z)*Math.sin(t)*Math.cos(rad(sunAz-surfaceAz)),0,1)}
+function exposures(p,o){return{North:incidence(p.az,p.alt,o),East:incidence(p.az,p.alt,o+90),South:incidence(p.az,p.alt,o+180),West:incidence(p.az,p.alt,o+270),Roof:incidence(p.az,p.alt,0,0)}}
+function color(v){return `hsl(${215-v*190} 65% ${72-v*22}%)`}
+let viewX=-18,viewY=35,anim=null;
+
+
+const SKY={
+ clear:{label:'☀️ Clear sky',factor:1.00},
+ partly:{label:'🌤️ Partly cloudy',factor:.65},
+ overcast:{label:'☁️ Overcast',factor:.28},
+ rain:{label:'🌧️ Rain / heavy overcast',factor:.12}
+};
+const FT2_TO_M2=.092903, W_TO_BTUH=3.412142;
+
+function shadowShadeFraction(p,o){
+  const depth=Math.max(0,+$('ohDepth').value||0),gap=Math.max(0,+$('ohGap').value||0);
+  const winH=Math.max(1,+$('winH').value||8),surfAz=norm(o+180);
+  let d=norm(p.az-surfAz); if(d>180)d-=360;
+  const facing=Math.cos(rad(d));
+  if(p.alt<=0||facing<=.02||depth<=0)return 0;
+  const normalAlt=Math.atan2(Math.tan(rad(p.alt)),Math.max(.05,facing));
+  const verticalDrop=depth*Math.tan(normalAlt);
+  return clamp(Math.max(0,Math.min(winH+gap,verticalDrop-gap))/winH,0,1);
+}
+function thermalAt(p,o){
+  if(p.alt<=0)return {total:0,window:0,walls:0,roof:0,irr:0,shade:0};
+  const sky=SKY[$('skyCondition').value]||SKY.clear;
+  const peak=Math.max(0,+$('solarIrr').value||1000);
+  // Simple clear-sky-shaped intensity curve: peak input scaled by sun altitude and selected sky scenario.
+  const horizontalFactor=Math.pow(Math.max(0,Math.sin(rad(p.alt))),.65);
+  const dniLike=peak*sky.factor*horizontalFactor;
+  const e=exposures(p,o),W=Math.max(1,+$('width').value||60),D=Math.max(1,+$('depth').value||40),H=Math.max(1,+$('height').value||30);
+  const wwr=clamp((+$('wwr').value||45)/100,.05,.90),shgc=clamp(+$('shgc').value||.35,0,1);
+  const areas={North:W*H,South:W*H,East:D*H,West:D*H,Roof:W*D};
+  let opaqueW=0,windowW=0;
+  for(const side of ['North','East','South','West']){
+    const gross=areas[side]*FT2_TO_M2;
+    const glass=gross*wwr,opaque=gross-glass;
+    // Opaque contribution is intentionally a solar-absorption proxy, not conductive wall load.
+    opaqueW += dniLike*e[side]*opaque*.18;
+    let shade=0;
+    if(side==='South' && $('windows').checked) shade=shadowShadeFraction(p,o);
+    windowW += dniLike*e[side]*glass*shgc*(1-shade);
+  }
+  const roofW=dniLike*e.Roof*areas.Roof*FT2_TO_M2*.22;
+  const totalW=opaqueW+windowW+roofW;
+  const southGlass=areas.South*FT2_TO_M2*wwr;
+  const southShade=$('windows').checked?shadowShadeFraction(p,o):0;
+  const southWindowW=dniLike*e.South*southGlass*shgc*(1-southShade);
+  return {total:totalW*W_TO_BTUH,window:southWindowW*W_TO_BTUH,walls:opaqueW*W_TO_BTUH,roof:roofW*W_TO_BTUH,irr:dniLike,shade:southShade};
+}
+function peakThermalToday(o){
+  const b=daylightBounds(),lat=clamp(parseFloat($('lat').value)||0,-89.9,89.9),lon=clamp(parseFloat($('lon').value)||0,-180,180),tz=clamp(parseFloat($('tz').value)||0,-12,14),date=$('date').value;
+  let peak=0;
+  for(let m=b.rise;m<=b.set;m+=15){
+    const p=solarPosition(lat,lon,date,minsToTime(m),tz);
+    peak=Math.max(peak,thermalAt(p,o).total);
+  }
+  return peak;
+}
+function fmtBTU(v){return Math.round(v).toLocaleString()+' BTU/hr'}
+function updateThermal(p,o){
+  const t=thermalAt(p,o),peak=peakThermalToday(o),sky=SKY[$('skyCondition').value]||SKY.clear;
+  $('heatNow').textContent=fmtBTU(t.total);
+  $('heatWindow').textContent=fmtBTU(t.window);
+  $('heatPeak').textContent=fmtBTU(peak);
+  $('skyLabel').textContent=sky.label+' assumption';
+  $('heatFill').style.width=(peak>0?clamp(t.total/peak*100,0,100):0).toFixed(1)+'%';
+  $('heatBreakdown').innerHTML=`Assumed incident solar level now: <b>${Math.round(t.irr)} W/m²</b> • opaque surfaces proxy: <b>${fmtBTU(t.walls)}</b> • roof proxy: <b>${fmtBTU(t.roof)}</b> • south overhang shade: <b>${Math.round(t.shade*100)}%</b>.`;
+}
+
+function facadeShadow(p,o){
+  const W=Math.max(1,+$('width').value||60),H=Math.max(1,+$('height').value||30);
+  const winW=clamp(+$('winW').value||18,1,W*.95),winH=clamp(+$('winH').value||8,1,H*.8);
+  const sill=clamp(+$('sillH').value||4,0,Math.max(0,H-winH));
+  const depth=Math.max(0,+$('ohDepth').value||0),gap=Math.max(0,+$('ohGap').value||0);
+  const surfAz=norm(o+180),rel=rad(norm(p.az-surfAz)>180?norm(p.az-surfAz)-360:norm(p.az-surfAz));
+  const facing=Math.cos(rel);
+  const px0=40,py0=25,pw=640,ph=235,sx=pw/W,sy=ph/H;
+  const ww=winW*sx,wh=winH*sy,wx=px0+(pw-ww)/2,wy=py0+ph-(sill+winH)*sy;
+  $('windowRect').setAttribute('x',wx);$('windowRect').setAttribute('y',wy);$('windowRect').setAttribute('width',ww);$('windowRect').setAttribute('height',wh);
+  const ohY=wy-gap*sy;$('overhangLine').setAttribute('x1',wx-10);$('overhangLine').setAttribute('x2',wx+ww+10);$('overhangLine').setAttribute('y1',ohY);$('overhangLine').setAttribute('y2',ohY);
+  let pts='',shade=0,status='No direct sun on south façade';
+  if(p.alt>0 && facing>0.02 && depth>0){
+    const normalAlt=Math.atan2(Math.tan(rad(p.alt)),Math.max(.05,facing));
+    const verticalDrop=depth*Math.tan(normalAlt);
+    const lateralShift=depth*Math.sin(rel)/Math.max(.08,Math.cos(rel));
+    const shTop=ohY, shBottom=ohY+verticalDrop*sy, shift=lateralShift*sx;
+    pts=`${wx},${shTop} ${wx+ww},${shTop} ${wx+ww+shift},${shBottom} ${wx+shift},${shBottom}`;
+    const shadowDepth=Math.max(0,Math.min(winH+gap,verticalDrop-gap));
+    shade=clamp(shadowDepth/winH,0,1);
+    status=`${Math.round(shade*100)}% estimated vertical glazing shade`;
+  } else if(depth<=0){status='Overhang depth is 0 ft'}
+  $('shadowPoly').setAttribute('points',pts);$('shadowPoly').style.opacity=$('shadowOn').checked&&pts?'.48':'0';
+  $('shadowStatus').textContent=status;
+  $('shadowLabel').textContent=p.alt>0?`Sun altitude ${p.alt.toFixed(1)}° • azimuth ${p.az.toFixed(1)}° • ${prettyTime(timeToMins($('time').value))}`:'Sun below horizon';
+  $('shadowCard').style.display=$('shadowOn').checked?'block':'none';
+}
+function drawFacadeGrid(){
+  const g=$('facadeGrid');let s='';
+  for(let i=1;i<10;i++)s+=`<line x1="${40+i*64}" y1="25" x2="${40+i*64}" y2="260" stroke="#59636b"/>`;
+  for(let j=1;j<5;j++)s+=`<line x1="40" y1="${25+j*47}" x2="680" y2="${25+j*47}" stroke="#59636b"/>`;
+  g.innerHTML=s;
+}
+function run(){const lat=clamp(parseFloat($('lat').value)||0,-89.9,89.9),lon=clamp(parseFloat($('lon').value)||0,-180,180),tz=clamp(parseFloat($('tz').value)||0,-12,14),o=+($('orient').value||0),co=+($('compareOrient').value||0);const p=solarPosition(lat,lon,$('date').value,$('time').value,tz),vals=exposures(p,o),comp=exposures(p,co);$('otxt').textContent=o+'°';$('ctxt').textContent=co+'°';for(const k in vals)$(k.toLowerCase()).style.background=color(vals[k]);$('stats').innerHTML=Object.entries(vals).map(([k,v])=>`<div class="stat"><div class="small">${k}</div><div class="value">${Math.round(v*100)}%</div></div>`).join('');const ranked=Object.entries(vals).sort((a,b)=>b[1]-a[1]),total=Object.values(vals).slice(0,4).reduce((a,b)=>a+b,0),ctotal=Object.values(comp).slice(0,4).reduce((a,b)=>a+b,0);$('currentTotal').textContent=total.toFixed(2);$('compareTotal').textContent=ctotal.toFixed(2);$('compareText').textContent=`${co}° orientation • ${ctotal<total?'lower':'higher or equal'} at selected instant`;$('summary').innerHTML=p.alt>0?`<b>Sun:</b> altitude ${p.alt.toFixed(1)}°, azimuth ${p.az.toFixed(1)}°. <b>Highest direct exposure:</b> ${ranked[0][0]} (${Math.round(ranked[0][1]*100)}%). ${ranked[0][0]==='West'&&p.alt>15?'Late-day west exposure can be useful to test against vertical fins or reduced glazing.':''}`:'<b>Sun is below the horizon</b> at the selected local time.';facadeShadow(p,o);updateThermal(p,o);$('cube').style.transform=`rotateX(${viewX}deg) rotateY(${viewY-o}deg)`;const x=50+38*Math.sin(rad(p.az))*Math.cos(rad(Math.max(0,p.alt))),y=58-46*Math.sin(rad(Math.max(0,p.alt)));$('sun').style.left=`calc(${x}% - 23px)`;$('sun').style.top=`calc(${y}% - 23px)`;$('sun').style.display=p.alt>0?'block':'none'}
+function minsToTime(mins){mins=((Math.round(mins)%1440)+1440)%1440;const h=Math.floor(mins/60),m=mins%60;return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')}
+function prettyTime(mins){mins=((Math.round(mins)%1440)+1440)%1440;let h=Math.floor(mins/60),m=mins%60,ap=h>=12?'PM':'AM';h=h%12||12;return `${h}:${String(m).padStart(2,'0')} ${ap}`}
+function timeToMins(t){const [h,m]=t.split(':').map(Number);return h*60+m}
+function daylightBounds(){const lat=clamp(parseFloat($('lat').value)||0,-89.9,89.9),lon=clamp(parseFloat($('lon').value)||0,-180,180),tz=clamp(parseFloat($('tz').value)||0,-12,14),date=$('date').value;let first=null,last=null,best=720,bestAlt=-90;for(let m=0;m<1440;m+=2){const p=solarPosition(lat,lon,date,minsToTime(m),tz);if(p.alt>0){if(first===null)first=m;last=m}if(p.alt>bestAlt){bestAlt=p.alt;best=m}}return{rise:first??0,set:last??1439,noon:best}}
+function syncPlayer(){const b=daylightBounds(),cur=timeToMins($('time').value);$('dayTime').min=b.rise;$('dayTime').max=b.set;$('dayTime').value=clamp(cur,b.rise,b.set);$('sunriseTxt').textContent=prettyTime(b.rise);$('sunsetTxt').textContent=prettyTime(b.set);$('clockRead').textContent=prettyTime(cur)}
+function setMinute(m){const b=daylightBounds();m=clamp(Math.round(m),b.rise,b.set);$('time').value=minsToTime(m);$('dayTime').value=m;$('clockRead').textContent=prettyTime(m);run()}
+function shiftMinutes(delta){setMinute(timeToMins($('time').value)+delta)}
+function stopSun(){if(anim){clearInterval(anim);anim=null}$('play').textContent='▶ Play sun'}
+function toggleSun(){if(anim){stopSun();return}const b=daylightBounds();let cur=timeToMins($('time').value);if(cur<b.rise||cur>=b.set)cur=b.rise;setMinute(cur);$('play').textContent='⏸ Pause';anim=setInterval(()=>{const bounds=daylightBounds(),step=+$('animSpeed').value||3;let m=timeToMins($('time').value)+step;if(m>bounds.set)m=bounds.rise;setMinute(m)},120)}
+$('calc').onclick=()=>{run();syncPlayer()};$('prev').onclick=()=>shiftMinutes(-15);$('next').onclick=()=>shiftMinutes(15);$('noon').onclick=()=>setMinute(daylightBounds().noon);$('play').onclick=toggleSun;$('dayTime').addEventListener('input',e=>{stopSun();setMinute(+e.target.value)});['orient','compareOrient'].forEach(id=>$(id).addEventListener('input',run));['lat','lon','tz','date','time'].forEach(id=>$(id).addEventListener('change',()=>{stopSun();run();syncPlayer()}));document.querySelectorAll('[data-preset]').forEach(b=>b.onclick=()=>{const y=$('date').value.slice(0,4)||'2026',p=b.dataset.preset;$('date').value=y+(p==='summer'?'-06-21':p==='winter'?'-12-21':'-09-22');stopSun();run();syncPlayer()});let dragging=false,lx=0,ly=0;$('scene').addEventListener('pointerdown',e=>{dragging=true;lx=e.clientX;ly=e.clientY;$('scene').setPointerCapture(e.pointerId)});$('scene').addEventListener('pointermove',e=>{if(!dragging)return;viewY+=(e.clientX-lx)*.35;viewX=clamp(viewX-(e.clientY-ly)*.25,-65,20);lx=e.clientX;ly=e.clientY;run()});$('scene').addEventListener('pointerup',()=>dragging=false);
+let designA=null,designB=null;
+function designState(){return{orientation:+$('orient').value,width:+$('width').value,depth:+$('depth').value,height:+$('height').value,floors:+$('floors').value,wwr:+$('wwr').value,overhang:+$('overhang').value}}
+function updateBuildingExtras(){const f=Math.max(1,+$('floors').value||1),fh=Math.max(6,+$('floorH').value||12);$('height').value=(f*fh).toFixed(0);const w=clamp(+$('wwr').value||45,5,90);$('glazing').style.width=w+'%';$('glazing').style.left=((100-w)/2)+'%';$('glazing').style.display=$('windows').checked?'block':'none';$('shade').style.display=$('windows').checked&&+$('overhang').value>0?'block':'none';$('shade').style.height=Math.max(5,Math.min(18,+$('overhang').value*2.2))+'px'}
+async function annualStudy(){updateBuildingExtras();const y=+$('date').value.slice(0,4),lat=clamp(+$('lat').value,-89.9,89.9),lon=clamp(+$('lon').value,-180,180),tz=clamp(+$('tz').value,-12,14),o=+$('orient').value;let sums={North:0,East:0,South:0,West:0,Roof:0},count=0;for(let m=1;m<=12;m++){for(let d of [7,14,21,28]){for(let h=7;h<=18;h++){let ds=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`,ts=String(h).padStart(2,'0')+':00',p=solarPosition(lat,lon,ds,ts,tz);if(p.alt<=0)continue;let e=exposures(p,o);for(let k in sums)sums[k]+=e[k];count++}}}for(let k in sums)sums[k]/=Math.max(1,count);let best=Object.entries(sums).sort((a,b)=>b[1]-a[1])[0];$('annualResult').innerHTML=`<b>Annual sample complete:</b> ${count} daylight states. Highest mean direct exposure: ${best[0]} (${Math.round(best[1]*100)}%). South ${Math.round(sums.South*100)}% • West ${Math.round(sums.West*100)}% • Roof ${Math.round(sums.Roof*100)}%.`;for(const k in sums)$(k.toLowerCase()).style.background=color(sums[k])}
+$('annual').onclick=annualStudy;$('copyA').onclick=()=>{designA=designState();$('abResult').innerHTML='<b>Design A saved.</b> Change the building/orientation, then click Set B.'};$('copyB').onclick=()=>{designB=designState();if(!designA){$('abResult').innerHTML='<b>Save Design A first.</b>';return}const delta=designB.orientation-designA.orientation;$('abResult').innerHTML=`<b>A/B saved:</b> A ${designA.orientation}° vs B ${designB.orientation}° (${delta>=0?'+':''}${delta}°). A: ${designA.floors} floors, ${designA.wwr}% glazing, ${designA.overhang} ft overhang. B: ${designB.floors} floors, ${designB.wwr}% glazing, ${designB.overhang} ft overhang.`};['floors','floorH','wwr','overhang','windows'].forEach(id=>$(id).addEventListener('change',()=>{updateBuildingExtras();run()}));updateBuildingExtras();['shadowOn','winW','winH','sillH','ohDepth','ohGap','width','height'].forEach(id=>$(id).addEventListener('input',run));['skyCondition','solarIrr','shgc'].forEach(id=>$(id).addEventListener('input',run));$('skyCondition').addEventListener('change',run);drawFacadeGrid();run();syncPlayer();
+</script></body></html>
